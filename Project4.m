@@ -1,5 +1,5 @@
-%clear;
-%clc;
+clear;
+clc;
 % %%
 % n = 700;
 % lamda  = 40+rand(1,1000)*(50-40);
@@ -30,52 +30,50 @@
 % figure;
 %% Part 1
 % clearvars p lamda;
-%[Spikes,L] =  GenSpike();
-[Spikes,V,g,xarr] = verNoP(Spikes,L);
-%Plot
-figure(3);
-subplot(4,1,1);
-plot(Spikes.s);
-xlabel('t(ms)');
-ylabel('S');
-ylim([0 1]);
-subplot(4,1,2);
-plot(Spikes.d);
-xlabel('t(ms)');
-ylabel('D');
-ylim([0 1]);
-subplot(4,1,3);
-plot(Spikes.sp);
-xlabel('t(ms)');
-ylabel('SP');
-ylim([0 1]);
-subplot(4,1,4);
-plot(Spikes.l4);
-xlabel('t(ms)');
-ylabel('L4');
-ylim([0 1]);
-% %%Part 2
-% PSTH.sp = zeros(1,L);
-% PSTH.l4 = zeros(1,L);
-% for i = 1:50
-%     [Spikes,L] =  GenSpike();
-%     [Spikes,V,g,~] = verNoP(Spikes,L);
-%     PSTH.sp = PSTH.sp + Spikes.sp;
-%     PSTH.l4 = PSTH.l4 + Spikes.l4;
-% end
-% PSTH.sp = PSTH.sp * 1000/50;
-% PSTH.l4 = PSTH.l4 * 1000/50;
-% figure(4)
-% subplot(2,1,1)
-% plot(PSTH.sp)
-% xlabel('t(ms)');
-% ylabel('PSTH_S_P');
-% subplot(2,1,2)
-% plot(PSTH.l4)
-% xlabel('t(ms)');
-% ylabel('PSTH_L_4');
-
-function [Spikes,V,g,xarr] = verNoP(Spikes,L)
+tau_ir = 5000;
+[Spikes,L] =  GenSpike();
+[Spikes,V,g,xarr] = verNoP(Spikes,L,tau_ir);
+plotspikes(Spikes)
+%%Part 2
+PSTH5 = PSTH_50itr(L,tau_ir);
+suptitle('\tau_i_r = 5000ms')
+%%Part 3
+tau_ir = 1000;
+PSTH1 = PSTH_50itr(L,tau_ir);
+suptitle('\tau_i_r = 1000ms')
+tau_ir = 3000;
+PSTH3 = PSTH_50itr(L,tau_ir);
+suptitle('\tau_i_r = 3000ms')
+tau_ir = 10000;
+PSTH10 = PSTH_50itr(L,tau_ir);
+suptitle('\tau_i_r = 10000ms')
+%%
+function PSTH1 = PSTH_50itr(L,tau_ir)
+PSTH.sp = zeros(1,L);
+PSTH.l4 = zeros(1,L);
+for i = 1:50
+    [Spikes,L] =  GenSpike();
+    [Spikes,~,~,~] = verNoP(Spikes,L,tau_ir);
+    PSTH.sp = PSTH.sp + Spikes.sp;
+    PSTH.l4 = PSTH.l4 + Spikes.l4;
+end
+PSTH.sp = PSTH.sp * 1000/50;
+PSTH.l4 = PSTH.l4 * 1000/50;
+for i = 1:L/10
+    PSTH1.sp(i) = mean(PSTH.sp(10*(i-1)+1:10*i));
+    PSTH1.l4(i) = mean(PSTH.l4(10*(i-1)+1:10*i));
+end
+figure;
+subplot(2,1,1)
+plot(PSTH1.sp)
+xlabel('t(x10ms)');
+ylabel('PSTH_S_P');
+subplot(2,1,2)
+plot(PSTH1.l4)
+xlabel('t(x10ms)');
+ylabel('PSTH_L_4');
+end
+function [Spikes,V,g,xarr] = verNoP(Spikes,L,tau_ir)
 Spikes.sp = zeros(1,L);
 Spikes.l4 = zeros(1,L);
 %% Model Parameters
@@ -97,10 +95,10 @@ minw.sp_l4 = 0.0001;
 % Short Term Plasticity
 tau.th.re = 0.9;
 tau.th.ei = 10;
-tau.th.ir = 5000;
+tau.th.ir = tau_ir;
 tau.sp.re = 0.9;
 tau.sp.ei = 27;
-tau.sp.ir = 5000;
+tau.sp.ir = tau_ir;
 x.s.e = 1;
 x.s.r = 0;
 x.s.i = 0;
@@ -207,4 +205,27 @@ y.d.i = x.d.i + x.d.e/tau.th.ei - x.d.i/tau.th.ir;
 y.sp.r = x.sp.r - s3*x.sp.r/tau.sp.re + x.sp.i/tau.sp.ir;
 y.sp.e = x.sp.e + s3*x.sp.r/tau.sp.re - x.sp.e/tau.sp.ei;
 y.sp.i = x.sp.i + x.sp.e/tau.sp.ei - x.sp.i/tau.sp.ir;
+end
+function plotspikes(Spikes)
+figure;
+subplot(4,1,1);
+plot(Spikes.s);
+xlabel('t(ms)');
+ylabel('S');
+ylim([0 1]);
+subplot(4,1,2);
+plot(Spikes.d);
+xlabel('t(ms)');
+ylabel('D');
+ylim([0 1]);
+subplot(4,1,3);
+plot(Spikes.sp);
+xlabel('t(ms)');
+ylabel('SP');
+ylim([0 1]);
+subplot(4,1,4);
+plot(Spikes.l4);
+xlabel('t(ms)');
+ylabel('L4');
+ylim([0 1]);
 end
