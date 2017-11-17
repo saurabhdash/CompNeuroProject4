@@ -1,5 +1,5 @@
-clear;
-clc;
+%clear;
+%clc;
 % %%
 % n = 700;
 % lamda  = 40+rand(1,1000)*(50-40);
@@ -30,8 +30,8 @@ clc;
 % figure;
 %% Part 1
 % clearvars p lamda;
-[Spikes,L] =  GenSpike();
-[Spikes,V,g] = verNoP(Spikes,L);
+%[Spikes,L] =  GenSpike();
+[Spikes,V,g,xarr] = verNoP(Spikes,L);
 %Plot
 figure(3);
 subplot(4,1,1);
@@ -54,42 +54,28 @@ plot(Spikes.l4);
 xlabel('t(ms)');
 ylabel('L4');
 ylim([0 1]);
-% figure(4);
-% subplot(2,1,1);
-% plot(V.sp);
+% %%Part 2
+% PSTH.sp = zeros(1,L);
+% PSTH.l4 = zeros(1,L);
+% for i = 1:50
+%     [Spikes,L] =  GenSpike();
+%     [Spikes,V,g,~] = verNoP(Spikes,L);
+%     PSTH.sp = PSTH.sp + Spikes.sp;
+%     PSTH.l4 = PSTH.l4 + Spikes.l4;
+% end
+% PSTH.sp = PSTH.sp * 1000/50;
+% PSTH.l4 = PSTH.l4 * 1000/50;
+% figure(4)
+% subplot(2,1,1)
+% plot(PSTH.sp)
 % xlabel('t(ms)');
-% ylabel('V_SP');
-% subplot(2,1,2);
-% plot(V.l4);
+% ylabel('PSTH_S_P');
+% subplot(2,1,2)
+% plot(PSTH.l4)
 % xlabel('t(ms)');
-% ylabel('V_L4');
-% 
-% figure(5);
-% plot(g.s);
-% xlabel('t(ms)');
-% ylabel('g.s');
-%%Part 2
-PSTH.sp = zeros(1,L);
-PSTH.l4 = zeros(1,L);
-for i = 1:50
-    [Spikes,L] =  GenSpike();
-    [Spikes,V,g] = verNoP(Spikes,L);
-    PSTH.sp = PSTH.sp + Spikes.sp;
-    PSTH.l4 = PSTH.l4 + Spikes.l4;
-end
-PSTH.sp = PSTH.sp * 1000/50;
-PSTH.l4 = PSTH.l4 * 1000/50;
-figure(4)
-subplot(2,1,1)
-plot(PSTH.sp)
-xlabel('t(ms)');
-ylabel('PSTH_S_P');
-subplot(2,1,2)
-plot(PSTH.l4)
-xlabel('t(ms)');
-ylabel('PSTH_L_4');
+% ylabel('PSTH_L_4');
 
-function [Spikes,V,g] = verNoP(Spikes,L)
+function [Spikes,V,g,xarr] = verNoP(Spikes,L)
 Spikes.sp = zeros(1,L);
 Spikes.l4 = zeros(1,L);
 %% Model Parameters
@@ -125,6 +111,16 @@ x.sp.e = 1;
 x.sp.r = 0;
 x.sp.i = 0;
 %
+xarr.s.e = zeros(1,L);
+xarr.s.r = zeros(1,L);
+xarr.s.i = zeros(1,L);
+xarr.d.e = zeros(1,L);
+xarr.d.r = zeros(1,L);
+xarr.d.i = zeros(1,L);
+xarr.sp.e = zeros(1,L);
+xarr.sp.r = zeros(1,L);
+xarr.sp.i = zeros(1,L);
+%
 tau.syn = 10;
 beta = 5;
 tau.ref = 2;
@@ -143,7 +139,6 @@ for t = 2:L
     elseif(Spikes.sp(t-1))
         g.sp(t:end) = g.sp(t-1) + exp(-((t:L) - t)/tau.syn);
     end
-    
     V.sp(t) = V.sp(t) + g.s(t-1)*w.s_sp*x.s.e + g.d(t-1)*w.d_sp*x.d.e;
     V.l4(t) = V.l4(t) + g.s(t-1)*w.s_l4*x.s.e + g.d(t-1)*w.d_l4*x.d.e + g.sp(t-1)*w.sp_l4*x.sp.e;
     V.sp(t) = V.sp(t) - 0.1*abs(V.sp(t));
@@ -158,6 +153,15 @@ for t = 2:L
         Spikes.l4(t) = 1;
         V.l4(t+1:t+20) = V.l4(t) - beta*exp(-((t+1:t+20) - (t+1))/tau.ref);
     end
+    xarr.s.e(t-1) = x.s.e;
+    xarr.s.r(t-1) = x.s.r;
+    xarr.s.i(t-1) = x.s.i;
+    xarr.d.e(t-1) = x.d.e;
+    xarr.d.r(t-1) = x.d.r;
+    xarr.d.i(t-1) = x.d.i;
+    xarr.sp.e(t-1) = x.sp.e;
+    xarr.sp.r(t-1) = x.sp.r;
+    xarr.sp.i(t-1) = x.sp.i;
     x = ShortTermPlasticity(x,tau,Spikes.s(t),Spikes.d(t),Spikes.sp(t));
 end
 end
@@ -194,13 +198,13 @@ end
 function y = ShortTermPlasticity(x,tau,s1,s2,s3)
 y.s.r = x.s.r - s1*x.s.r/tau.th.re + x.s.i/tau.th.ir;
 y.s.e = x.s.e + s1*x.s.r/tau.th.re - x.s.e/tau.th.ei;
-y.s.i = x.s.e/tau.th.ei - x.s.i/tau.th.ir;
+y.s.i = x.s.i + x.s.e/tau.th.ei - x.s.i/tau.th.ir;
 
 y.d.r = x.d.r - s2*x.d.r/tau.th.re + x.d.i/tau.th.ir;
 y.d.e = x.d.e + s2*x.d.r/tau.th.re - x.d.e/tau.th.ei;
-y.d.i = x.d.e/tau.th.ei - x.d.i/tau.th.ir;
+y.d.i = x.d.i + x.d.e/tau.th.ei - x.d.i/tau.th.ir;
 
 y.sp.r = x.sp.r - s3*x.sp.r/tau.sp.re + x.sp.i/tau.sp.ir;
 y.sp.e = x.sp.e + s3*x.sp.r/tau.sp.re - x.sp.e/tau.sp.ei;
-y.sp.i = x.sp.e/tau.sp.ei - x.sp.i/tau.sp.ir;
+y.sp.i = x.sp.i + x.sp.e/tau.sp.ei - x.sp.i/tau.sp.ir;
 end
