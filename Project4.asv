@@ -362,7 +362,7 @@ for t = 2:L
     w = LongTermPlasticity(w,tau,lastspike,a,t);
 end
 end
-function w1 = LongTermPlasticity(w,tau,lastspike,a,t)
+function [w1] = LongTermPlasticity(w,tau,lastspike,a,t)
 if(lastspike.s)
     if(lastspike.l4 ~= 0)
         w1.s_l4 = w.s_l4*a.ltd*exp(-(t-lastspike.l4)/tau.ltd);
@@ -377,23 +377,11 @@ end
 if(lastspike.d)
     if(lastspike.l4 ~= 0)
         w1.d_l4 = w.d_l4*a.ltd*exp(-(t-lastspike.l4)/tau.ltd);
-        if(w1.d_l4 > 0.4)
-            w1.d_l4 = 0.4;
-        end       
-        if(w1.d_l4 < 0.0001)
-            w1.d_l4 = 0.0001;
-        end
     end
 end
 if(lastspike.sp)
     if(lastspike.l4 ~= 0)
         w1.sp_l4 = w.sp_l4*a.ltd*exp(-(t-lastspike.l4)/tau.ltd);
-        if(w1.sp_l4 > 0.11)
-            w1.sp_l4 = 0.11;
-        end
-        if(w1.sp_l4 < 0.0001)
-            w1.sp_l4 = 0.0001;
-        end
     end
 end
 if(lastspike.l4)
@@ -417,12 +405,16 @@ if(lastspike.l4)
     end
     if(lastspike.sp ~= 0)
         w1.sp_l4 = w.sp_l4*a.ltp*exp((t-lastspike.sp)/tau.ltp);
-        if(w1.sp_l4 > 0.11)
-            w1.sp_l4 = 0.11;
-        end
-        if(w1.sp_l4 < 0.0001)
-            w1.sp_l4 = 0.0001;
-        end
     end
+end
+%Limit Check
+
+if(w1.sp_l4 > 0.11)
+    w1.sp_l4 = 0.11;
+end
+
+
+if(w1.sp_l4 < 0.0001)
+    w1.sp_l4 = 0.0001;
 end
 end
