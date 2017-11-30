@@ -1,43 +1,16 @@
 clear;
 clc;
-% %%
-% n = 700;
-% lamda  = 40+rand(1,1000)*(50-40);
-% p = lamda./1000;         %probabilty of spiking per 1 ms
-% Spikes = zeros(n,1000);
-% for i = 1:n
-%     for j = 1:1000
-%         if(rand() < p(j))
-%             Spikes(i,j) = 1;
-%         end
-%     end
-% end
-% SpikeTime = cell(320,1);
-% for i = 1:n
-%     SpikeTime{i,1} = find(Spikes(i,:));
-% end
-% %%
-% a = [10 20 40 80 160 320 700];
-% mse = zeros(1,length(a));
-% PSTH = zeros(length(a),1000);
-% for i = 1:length(a)
-%     PSTH(i,:) = 1000*mean(Spikes(1:a(i),:),1);
-%     mse(i) = sqrt(immse(lamda,PSTH(i,:)));
-% end
-% plot(a,mse,'x-');
-% ylabel('Mean Square Error');
-% xlabel('# of Repetitions');
-% figure;
+%%
+Basics();
 %% Part 1
-% clearvars p lamda;
 tau_ir = 5000;
 [Spikes,L] =  GenSpike();
 [Spikes,V,g,xarr] = verNoP(Spikes,L,tau_ir);
 plotspikes(Spikes)
-%%Part 2
+%% Part 2
 PSTH5 = PSTH_50itr(L,tau_ir);
 suptitle('\tau_i_r = 5000ms')
-%%Part 3
+%% Part 3
 tau_ir = 1000;
 PSTH1 = PSTH_50itr(L,tau_ir);
 suptitle('\tau_i_r = 1000ms')
@@ -47,7 +20,36 @@ suptitle('\tau_i_r = 3000ms')
 tau_ir = 10000;
 PSTH10 = PSTH_50itr(L,tau_ir);
 suptitle('\tau_i_r = 10000ms')
+%% Functions
+function Basics()
+n = 700;
+lamda  = 40+rand(1,1000)*(50-40);
+p = lamda./1000;         %probabilty of spiking per 1 ms
+Spikes = zeros(n,1000);
+for i = 1:n
+    for j = 1:1000
+        if(rand() < p(j))
+            Spikes(i,j) = 1;
+        end
+    end
+end
+SpikeTime = cell(320,1);
+for i = 1:n
+    SpikeTime{i,1} = find(Spikes(i,:));
+end
 %%
+a = [10 20 40 80 160 320 700];
+mse = zeros(1,length(a));
+PSTH = zeros(length(a),1000);
+for i = 1:length(a)
+    PSTH(i,:) = 1000*mean(Spikes(1:a(i),:),1);
+    mse(i) = sqrt(immse(lamda,PSTH(i,:)));
+end
+plot(a,mse,'x-');
+ylabel('Mean Square Error');
+xlabel('# of Repetitions');
+%figure;
+end
 function PSTH1 = PSTH_50itr(L,tau_ir)
 PSTH.sp = zeros(1,L);
 PSTH.l4 = zeros(1,L);
@@ -99,14 +101,14 @@ tau.th.ir = tau_ir;
 tau.sp.re = 0.9;
 tau.sp.ei = 27;
 tau.sp.ir = tau_ir;
-x.s.e = 1;
-x.s.r = 0;
+x.s.e = 0;
+x.s.r = 1;
 x.s.i = 0;
-x.d.e = 1;
-x.d.r = 0;
+x.d.e = 0;
+x.d.r = 1;
 x.d.i = 0;
-x.sp.e = 1;
-x.sp.r = 0;
+x.sp.e = 0;
+x.sp.r = 1;
 x.sp.i = 0;
 %
 xarr.s.e = zeros(1,L);
@@ -177,8 +179,8 @@ L = length(lamda.S);
 Input.s = zeros(1,L);
 Input.d = zeros(1,length(lamda.D));
 for j = 1:L
-        Input.s(j) = binornd(1,lamda.S(j));
-        Input.d(j) = binornd(1,lamda.D(j));
+    Input.s(j) = binornd(1,lamda.S(j));
+    Input.d(j) = binornd(1,lamda.D(j));
 end
 % subplot(2,1,1);
 % plot(Input.s);
