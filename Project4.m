@@ -1,8 +1,9 @@
 clear;
 clc;
+close all;
 %%
 % Basics();
-% %% Part 1
+%% Part 1
 % tau_ir = 5000;
 % [Spikes,L] =  GenSpike();
 % [Spikes,V,g,xarr] = verNoP(Spikes,L,tau_ir);
@@ -22,11 +23,22 @@ clc;
 % suptitle('\tau_i_r = 10000ms')
 %% Part 4
 clear Spikes g L tau_ir V xarr
-Spikes = GenSpike60Min(1);
+%Spikes = GenSpike60Min(4.5/60);
+%[Spikes,~] = GenSpike();
+load('spike.mat');
+Spikes.s = spike.ThS(1:10^6);
+Spikes.d = spike.ThD(1:10^6);
+clearvars spike;
+tic
 [Spikes,V,g,xarr,warr] = verP(Spikes);
-%sum(Spikes.s(:) == 1)
-%sum(Spikes.d(:) == 1)
+toc
+sum(Spikes.s(:) == 1);
+sum(Spikes.d(:) == 1);
+sum(Spikes.sp(:) == 1);
+sum(Spikes.l4(:) == 1);
 plotspikes(Spikes);
+plotweights(warr);
+plotchangeweights(warr);
 %% Functions
 function Basics()
 n = 700;
@@ -317,10 +329,10 @@ V.sp = zeros(1,L);
 V.l4 = zeros(1,L);
 %%
 for t = 2:L
-    if(Spikes.s)
+    if(Spikes.s(t))
         lastspike.s = t;
     end
-    if(Spikes.d)
+    if(Spikes.d(t))
         lastspike.d = t;
     end
     if(Spikes.s(t-1))
@@ -362,67 +374,105 @@ for t = 2:L
     w = LongTermPlasticity(w,tau,lastspike,a,t);
 end
 end
-function w1 = LongTermPlasticity(w,tau,lastspike,a,t)
-if(lastspike.s)
+function w = LongTermPlasticity(w,tau,lastspike,a,t)
+if(lastspike.s == t)
     if(lastspike.l4 ~= 0)
-        w1.s_l4 = w.s_l4*a.ltd*exp(-(t-lastspike.l4)/tau.ltd);
-        if(w1.s_l4 > 0.4)
-            w1.s_l4 = 0.4;
+        w.s_l4 = w.s_l4-w.s_l4*a.ltd*exp(-(t-lastspike.l4)/tau.ltd);
+        if(w.s_l4 > 0.4)
+            w.s_l4 = 0.4;
         end
-        if(w1.s_l4 < 0.0001)
-            w1.s_l4 = 0.0001;
+        if(w.s_l4 < 0.0001)
+            w.s_l4 = 0.0001;
         end
     end
 end
-if(lastspike.d)
+if(lastspike.d == t)
     if(lastspike.l4 ~= 0)
-        w1.d_l4 = w.d_l4*a.ltd*exp(-(t-lastspike.l4)/tau.ltd);
-        if(w1.d_l4 > 0.4)
-            w1.d_l4 = 0.4;
+        w.d_l4 = w.d_l4 - w.d_l4*a.ltd*exp(-(t-lastspike.l4)/tau.ltd);
+        if(w.d_l4 > 0.4)
+            w.d_l4 = 0.4;
         end       
-        if(w1.d_l4 < 0.0001)
-            w1.d_l4 = 0.0001;
+        if(w.d_l4 < 0.0001)
+            w.d_l4 = 0.0001;
         end
     end
 end
-if(lastspike.sp)
+if(lastspike.sp == t)
     if(lastspike.l4 ~= 0)
-        w1.sp_l4 = w.sp_l4*a.ltd*exp(-(t-lastspike.l4)/tau.ltd);
-        if(w1.sp_l4 > 0.11)
-            w1.sp_l4 = 0.11;
+        w.sp_l4 = w.sp_l4 - w.sp_l4*a.ltd*exp(-(t-lastspike.l4)/tau.ltd);
+        if(w.sp_l4 > 0.11)
+            w.sp_l4 = 0.11;
         end
-        if(w1.sp_l4 < 0.0001)
-            w1.sp_l4 = 0.0001;
+        if(w.sp_l4 < 0.0001)
+            w.sp_l4 = 0.0001;
         end
     end
 end
-if(lastspike.l4)
+if(lastspike.l4 == t)
     if(lastspike.s ~= 0)
-        w1.s_l4 = w.s_l4*a.ltp*exp((t-lastspike.s)/tau.ltp);
-        if(w1.s_l4 > 0.4)
-            w1.s_l4 = 0.4;
+        w.s_l4 = w.s_l4 + w.s_l4*a.ltp*exp(-(t-lastspike.s)/tau.ltp);
+        if(w.s_l4 > 0.4)
+            w.s_l4 = 0.4;
         end
-        if(w1.s_l4 < 0.0001)
-            w1.s_l4 = 0.0001;
+        if(w.s_l4 < 0.0001)
+            w.s_l4 = 0.0001;
         end
     end
     if(lastspike.d ~= 0)
-        w1.d_l4 = w.d_l4*a.ltp*exp((t-lastspike.d)/tau.ltp);
-        if(w1.d_l4 > 0.4)
-            w1.d_l4 = 0.4;
+        w.d_l4 = w.d_l4 + w.d_l4*a.ltp*exp(-(t-lastspike.d)/tau.ltp);
+        if(w.d_l4 > 0.4)
+            w.d_l4 = 0.4;
         end       
-        if(w1.d_l4 < 0.0001)
-            w1.d_l4 = 0.0001;
+        if(w.d_l4 < 0.0001)
+            w.d_l4 = 0.0001;
         end
     end
     if(lastspike.sp ~= 0)
-        w1.sp_l4 = w.sp_l4*a.ltp*exp((t-lastspike.sp)/tau.ltp);
-        if(w1.sp_l4 > 0.11)
-            w1.sp_l4 = 0.11;
+        w.sp_l4 = w.sp_l4 + w.sp_l4*a.ltp*exp(-(t-lastspike.sp)/tau.ltp);
+        if(w.sp_l4 > 0.11)
+            w.sp_l4 = 0.11;
         end
-        if(w1.sp_l4 < 0.0001)
-            w1.sp_l4 = 0.0001;
+        if(w.sp_l4 < 0.0001)
+            w.sp_l4 = 0.0001;
         end
     end
 end
+end
+function plotweights(warr)
+figure;
+suptitle('Weights');
+subplot(3,1,1);
+plot(warr.s_l4);
+xlabel('t(ms)');
+ylabel('S->L4');
+ylim([0 0.5]);
+subplot(4,1,2);
+plot(warr.d_l4);
+xlabel('t(ms)');
+ylabel('D->L4');
+ylim([0 0.5]);
+subplot(4,1,3);
+plot(warr.sp_l4);
+xlabel('t(ms)');
+ylabel('SP->L4');
+ylim([0 0.15]);
+end
+function plotchangeweights(warr)
+figure;
+suptitle('Change in Weights');
+subplot(3,1,1);
+plot(1000000 * diff(warr.s_l4));
+xlabel('t(ms)');
+ylabel('S->L4');
+ylim([-5 5]);
+subplot(4,1,2);
+plot(1000000 * diff(warr.d_l4));
+xlabel('t(ms)');
+ylabel('D->L4');
+ylim([-5 5]);
+subplot(4,1,3);
+plot(10000 * diff(warr.sp_l4));
+xlabel('t(ms)');
+ylabel('SP->L4');
+ylim([-5 5]);
 end
